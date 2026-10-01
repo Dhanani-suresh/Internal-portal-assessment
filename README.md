@@ -1,26 +1,27 @@
 # Internal Portal
 
-A small, full-stack internal portal built with Next.js for the Full Stack Engineer take-home assessment. It gives a team a single, authenticated place to read, publish, and manage announcements.
+A full-stack internal portal built with Next.js for the Full Stack Engineer take-home assessment which gives a team a single, authenticated place to read, publish, and manage announcements.
 
-The brief prioritises one complete feature over several incomplete ones. I therefore chose an announcements feed and implemented the full journey: sign in, access a protected portal, load data through an API, publish an update, and delete an update when authorised.
+Since brief prioritises one complete feature over several incomplete ones, I chose an announcements feed and implemented the full journey: sign in, access a protected portal, load data through an API, publish an update, and delete an update when authorised.
 
-## Highlights
+## Features
 
 - Built with the Next.js App Router, including server-rendered pages and route handlers.
 - Custom login and logout flow using signed, expiring HTTP-only session cookies.
 - Dashboard and announcements API protected on the server.
-- Create, view, and delete announcements.
-- Delete permission is restricted to the announcement author.
-- Persistent local data stored in a JSON file for zero-configuration setup.
+- View announcements, with newest posts shown first
+- Create announcements with client and server-side validation
+- Delete announcements, restricted to the person who created them.
+- Local JSON persistence, so announcements remain after a refresh or server restart
 - Responsive, accessible interface with loading, success, error, confirmation, and input-validation states.
 
 ## Technology choices
 
 | Area | Choice | Reasoning |
 | --- | --- | --- |
-| Framework | Next.js App Router | Keeps the React frontend, server-rendered routes, and API endpoints in one cohesive application. |
+| Framework | Next.js App Router | Keeps the frontend, server-rendered routes, and API endpoints in one cohesive application. |
 | Language | TypeScript | Makes component props, API data, and storage contracts more explicit and safer to change. |
-| Authentication | Signed session cookie | Provides a small, dependency-free session flow appropriate for the scope of a single-account take-home project. |
+| Authentication | Signed session cookie using an HTTP-only cookie| Provides a small, dependency-free session flow appropriate for the scope of a single-account take-home project. |
 | Storage | JSON file | Lets reviewers run the project immediately without provisioning a database, while keeping storage behind a dedicated server module. |
 | Styling | CSS | Keeps the UI lightweight and the design system easy to inspect. |
 
@@ -61,25 +62,14 @@ The brief prioritises one complete feature over several incomplete ones. I there
 
 5. Open `http://localhost:3000`.
 
-### Demo account
+### Demo account credentials
 
-The project intentionally uses one configurable demo account to keep setup concise.
+The demo account is configured through environment variables and has the following defaults: 
 
-| Environment variable | Default value |
-| --- | --- |
-| `PORTAL_DEMO_EMAIL` | `team@acme.test` |
-| `PORTAL_DEMO_PASSWORD` | `welcome123` |
+- **Email:** `team@acme.test`
+- **Password:** `welcome123`
 
-You may keep these defaults or change them in `.env.local`. The login screen does not display these credentials.
-
-## Available commands
-
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Starts the local development server. |
-| `npm run typecheck` | Runs TypeScript validation without emitting files. |
-| `npm run build` | Creates the production build. |
-| `npm run start` | Runs the completed production build. |
+These can be changed through `PORTAL_DEMO_EMAIL` and `PORTAL_DEMO_PASSWORD` in `.env.local`.
 
 ## Application structure
 
@@ -99,7 +89,6 @@ data/
   announcements.json           # Persisted local announcement data
 proxy.ts                       # Early dashboard redirect for signed-out visitors
 ```
-
 ## Authentication and authorisation
 
 The application uses a signed session token stored in an HTTP-only cookie.
@@ -127,28 +116,17 @@ This layered approach means route protection is not reliant on client-side UI st
 
 Announcement data is stored in `data/announcements.json`. The UI never reads or writes that file directly: client components call the Next.js API routes with `fetch`, and the API routes use `src/lib/announcements.ts` as the storage boundary. This keeps the frontend contract independent from the storage mechanism, so a database implementation could replace the JSON repository later without rewriting the UI.
 
-On the client, the announcements component manages the feed, form values, posting state, delete state, and feedback messages locally. This is sufficient for the single-screen scope without adding a global state library.
+On the client, the announcements component manages the feed, form values, posting state, delete state, and feedback messages locally. This is enough for the single-screen scope without adding a global state library.
 
-## Validation checklist
+## Component and state choices
 
-Before submission, run:
+I used  small, focused components for login, logout, and the announcements panel. The announcements panel owns the state it needs for the feed, form fields, loading, publishing, deletion, and user feedback. For this single-screen feature, local React state was simpler and clearer than adding a global state library.
 
-```bash
-npm run typecheck
-npm run build
-```
 
-Then verify the main user journey:
+## Key decisions and future improvements
 
-1. Open `/dashboard` while signed out and confirm the redirect to `/login`.
-2. Sign in with the configured demo account.
-3. Publish an announcement and confirm it appears at the top of the feed.
-4. Refresh the page and confirm it remains available.
-5. Delete your own announcement and confirm it is removed after confirmation.
-6. Sign out and confirm the dashboard and announcements API are no longer accessible.
-
-## Scope and future improvements
-
-The JSON store and environment-configured demo account are deliberate choices for a short take-home task: they keep the project easy to run while still demonstrating a complete frontend-to-API-to-storage flow.
-
-For a production portal, I would next add a database, password hashing or an identity provider, role-based permissions, audit logs, rate limiting, automated tests, and monitoring. Those additions are intentionally outside this focused implementation.
+- **Content section:** I chose announcements instead of a team list or links page because it gives a simple workflow for viewing, creating, and managing items in one focused feature.
+- **Data storage:** I used a JSON file to keep the project easy to run without requiring separate database setup, while still demonstrating a clear UI → API → storage flow. For a production application, I would use a database such as PostgreSQL with an ORM to handle concurrent updates, querying, and data relationships.
+- **Authentication:** I used a signed HTTP-only session cookie to keep the session token out of client-side JavaScript while allowing the server to validate protected requests. For production, I would consider an established solution such as Better Auth with a proper user store and securely hashed credentials
+- **Server-side API protection:** The dashboard and announcement API routes validate the session on the server, rather than relying on client-side state. The delete endpoint also checks ownership, so users can only manage their own announcements. For a larger application, this could be extended with role-based permissions and audit logging.
+- **Local component state:** Since the application only has a small amount of interactive state, I kept it within the relevant React components instead of adding a global state library. A larger application with more shared state could benefit from a dedicated state or data-fetching solution.
