@@ -1,0 +1,9 @@
+[
+  {
+    "id": "welcome-to-the-portal",
+    "title": "Welcome to the internal portal",
+    "body": "This is the shared space for team updates, important decisions, and useful announcements. Add a post to keep everyone informed.",
+    "author": "team@acme.test",
+    "createdAt": "2026-10-01T09:00:00.000Z"
+  }
+]
